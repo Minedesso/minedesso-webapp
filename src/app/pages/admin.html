@@ -1,0 +1,929 @@
+@switch (page()) {
+  @case ('overview') {
+    <ng-container *ngTemplateOutlet="overview" />
+  }
+  @case ('servers') {
+    <ng-container *ngTemplateOutlet="servers" />
+  }
+  @case ('players') {
+    <ng-container *ngTemplateOutlet="players" />
+  }
+  @case ('console') {
+    <ng-container *ngTemplateOutlet="console" />
+  }
+  @case ('backups') {
+    <ng-container *ngTemplateOutlet="backups" />
+  }
+  @case ('settings') {
+    <ng-container *ngTemplateOutlet="settings" />
+  }
+  @case ('roles') {
+    <ng-container *ngTemplateOutlet="roles" />
+  }
+  @case ('logs') {
+    <ng-container *ngTemplateOutlet="logs" />
+  }
+}
+
+<ng-template #overview>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">OPERATIONS CENTER</span>
+      <h1>Netzwerk Overview</h1>
+      <p>Live-Zustand des gesamten Minedesso-Netzwerks.</p>
+    </div>
+    <div class="sync-state">
+      <i></i><span>LIVE-TELEMETRIE<small>Aktualisiert vor 4 Sek.</small></span>
+    </div>
+  </div>
+  <section class="metric-grid">
+    <article class="metric-card">
+      <span class="metric-icon green">♟</span>
+      <div>
+        <small>SPIELER ONLINE</small><strong>{{ api.onlinePlayers() }}</strong
+        ><span>von 500 Slots</span>
+      </div>
+      <em>+12 %</em>
+    </article>
+    <article class="metric-card">
+      <span class="metric-icon purple">▤</span>
+      <div>
+        <small>NETZWERK RAM</small><strong>{{ api.networkRam() }} %</strong
+        ><span>42,6 / 64 GB</span>
+      </div>
+      <em>Normal</em>
+    </article>
+    <article class="metric-card">
+      <span class="metric-icon blue">⌁</span>
+      <div><small>Ø TPS</small><strong>19,7</strong><span>über 4 Server</span></div>
+      <em>Stabil</em>
+    </article>
+    <article class="metric-card">
+      <span class="metric-icon gold">◷</span>
+      <div><small>UPTIME</small><strong>99,98 %</strong><span>letzte 30 Tage</span></div>
+      <em>18T 04h</em>
+    </article>
+  </section>
+  <section class="admin-dashboard">
+    <article class="card panel server-health">
+      <div class="card panel-head">
+        <div>
+          <span class="eyebrow">SERVERSTATUS</span>
+          <h2>Alle Instanzen</h2>
+        </div>
+        <button class="text-link" (click)="api.showToast('Serverstatus aktualisiert.')">
+          Aktualisieren ↻
+        </button>
+      </div>
+      @for (server of api.servers().slice(1); track server.id) {
+        <button
+          class="server-health-row"
+          (click)="selectedServer.set(server.id); actionModal.set('server')"
+        >
+          <div>
+            <span class="server-glyph">{{
+              server.type === 'IsleWars'
+                ? '⚔'
+                : server.type === 'Event'
+                  ? '✦'
+                  : server.type === 'Lobby'
+                    ? '⌂'
+                    : '▦'
+            }}</span
+            ><span
+              ><strong>{{ server.name }}</strong
+              ><small>{{ server.type }} · {{ server.version }}</small></span
+            >
+          </div>
+          <span
+            ><b>{{ server.players }}</b
+            ><small>Spieler</small></span
+          ><span
+            ><b>{{ server.ram }} %</b><small>RAM</small></span
+          ><span
+            ><b>{{ server.cpu }} %</b><small>CPU</small></span
+          ><span
+            ><b>{{ server.tps }}</b
+            ><small>TPS</small></span
+          ><m-status
+            [label]="statusLabel(server.status)"
+            [tone]="server.status === 'online' ? 'online' : 'warning'"
+          /><i>›</i>
+        </button>
+      }
+    </article>
+    <article class="card panel quick-actions">
+      <div class="card panel-head">
+        <div>
+          <span class="eyebrow">QUICK ACTIONS</span>
+          <h2>Schnellzugriff</h2>
+        </div>
+      </div>
+      <div>
+        <button (click)="actionModal.set('restart')">
+          <i>↻</i><span><b>Restart</b><small>Server neu starten</small></span></button
+        ><button (click)="actionModal.set('backup')">
+          <i>⬡</i><span><b>Backup</b><small>Manuell erstellen</small></span></button
+        ><button (click)="actionModal.set('whitelist')">
+          <i>♟</i><span><b>Whitelist</b><small>Spieler verwalten</small></span></button
+        ><button (click)="actionModal.set('broadcast')">
+          <i>◖</i><span><b>Broadcast</b><small>Nachricht senden</small></span>
+        </button>
+      </div>
+    </article>
+    <article class="card panel compact-console">
+      <div class="card panel-head">
+        <div>
+          <span class="eyebrow">LIVE CONSOLE</span>
+          <h2>{{ selectedServerName() }}</h2>
+        </div>
+        <select class="form-select" [(ngModel)]="serverChoice">
+          <option>CityBuild-1</option>
+          <option>Lobby-1</option>
+          <option>IsleWars-1</option>
+        </select>
+      </div>
+      <div class="console-output small">
+        @for (line of api.consoleLines().slice(-4); track $index) {
+          <p [class]="line.level.toLowerCase()">
+            <time>{{ line.time }}</time
+            ><b>{{ line.level }}</b
+            ><span>{{ line.message }}</span>
+          </p>
+        }
+      </div>
+      <form class="command-line" (ngSubmit)="runCommand()">
+        <span>›</span
+        ><input
+          class="form-control"
+          [(ngModel)]="command"
+          name="command"
+          placeholder="Command eingeben…"
+          autocomplete="off"
+        /><button>Senden</button>
+      </form>
+    </article>
+    <article class="card panel recent-backups">
+      <div class="card panel-head">
+        <div>
+          <span class="eyebrow">LETZTE BACKUPS</span>
+          <h2>Sicherungspunkte</h2>
+        </div>
+      </div>
+      @for (backup of api.backups().slice(0, 4); track backup.id) {
+        <div class="backup-row">
+          <span [class]="'backup-status ' + backup.status">{{
+            backup.status === 'success' ? '✓' : backup.status === 'failed' ? '!' : '↻'
+          }}</span>
+          <div>
+            <strong>{{ backup.server }}</strong
+            ><small>{{ backup.createdAt }} · {{ backup.type }}</small>
+          </div>
+          <b>{{ backup.size }}</b>
+        </div>
+      }
+    </article>
+  </section>
+</ng-template>
+
+<ng-template #servers>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">INFRASTRUKTUR</span>
+      <h1>Server</h1>
+      <p>{{ api.servers().length }} registrierte Instanzen · Telemetrie in Echtzeit.</p>
+    </div>
+    <button class="btn button secondary" (click)="api.showToast('Serverliste aktualisiert.')">
+      ↻ Aktualisieren
+    </button>
+  </div>
+  <section class="server-grid">
+    @for (server of api.servers(); track server.id) {
+      <article class="card panel server-card" [class.degraded]="server.status !== 'online'">
+        <div class="server-card-head">
+          <span class="server-glyph large">{{
+            server.type === 'IsleWars'
+              ? '⚔'
+              : server.type === 'Event'
+                ? '✦'
+                : server.type === 'Lobby'
+                  ? '⌂'
+                  : server.type === 'Velocity'
+                    ? '⌁'
+                    : '▦'
+          }}</span
+          ><m-status
+            [label]="statusLabel(server.status)"
+            [tone]="server.status === 'online' ? 'online' : 'warning'"
+          />
+        </div>
+        <small>{{ server.type.toUpperCase() }}</small>
+        <h2>{{ server.name }}</h2>
+        <p>{{ server.version }} · Uptime {{ server.uptime }}</p>
+        <div class="telemetry">
+          <span
+            ><small>SPIELER</small><b>{{ server.players }} / {{ server.capacity }}</b
+            ><m-progress [value]="server.players" [max]="server.capacity" label="" /></span
+          ><span
+            ><small>RAM</small><b>{{ server.ram }} %</b
+            ><m-progress [value]="server.ram" [max]="100" label="" /></span
+          ><span
+            ><small>CPU</small><b>{{ server.cpu }} %</b
+            ><m-progress [value]="server.cpu" [max]="100" label=""
+          /></span>
+        </div>
+        <div class="server-stats">
+          <span
+            ><small>TPS</small><b>{{ server.tps }}</b></span
+          ><span
+            ><small>MSPT</small><b>{{ server.mspt }} ms</b></span
+          ><span
+            ><small>UPTIME</small><b>{{ server.uptime }}</b></span
+          >
+        </div>
+        <button
+          class="btn button secondary full"
+          (click)="selectedServer.set(server.id); actionModal.set('server')"
+        >
+          Details öffnen →
+        </button>
+      </article>
+    }
+  </section>
+</ng-template>
+
+<ng-template #players>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">SPIELERADMINISTRATION</span>
+      <h1>Spieler & Moderation</h1>
+      <p>Online- und bekannte Offline-Spieler verwalten.</p>
+    </div>
+  </div>
+  <div class="player-search panel">
+    <label class="search-field"
+      ><span>⌕</span
+      ><input
+        class="form-control"
+        [(ngModel)]="playerSearch"
+        placeholder="Minecraft-Name oder UUID suchen…"
+    /></label>
+    <div class="btn-group segmented">
+      <button class="active">Alle</button><button>Online</button><button>Sanktioniert</button>
+    </div>
+  </div>
+  <section class="player-admin-layout">
+    <div class="card panel player-results">
+      <div class="table-head">
+        <span>SPIELER</span><span>STATUS</span><span>RANG</span><span>LEVEL</span
+        ><span>ZULETZT ONLINE</span>
+      </div>
+      @for (player of filteredPlayers(); track player.id) {
+        <button
+          class="player-admin-row"
+          [class.active]="selectedPlayer() === player.id"
+          (click)="selectedPlayer.set(player.id)"
+        >
+          <span
+            ><m-avatar
+              [name]="player.name"
+              [hue]="player.hue"
+              [src]="player.skinUrl"
+              [skinIndex]="player.skinIndex"
+              size="small"
+            /><b>{{ player.name }}</b></span
+          ><m-status
+            [label]="player.online ? player.server! : 'Offline'"
+            [tone]="player.online ? 'online' : 'offline'"
+          /><span>{{ player.rank }}</span
+          ><span>{{ player.level }}</span
+          ><span>{{ player.lastSeen }}</span>
+        </button>
+      }
+    </div>
+    <article class="card panel admin-player-profile">
+      <div class="admin-player-head">
+        <m-avatar
+          [name]="activePlayer().name"
+          [hue]="activePlayer().hue"
+          [src]="activePlayer().skinUrl"
+          [skinIndex]="activePlayer().skinIndex"
+          size="large"
+        />
+        <div>
+          <span class="rank-badge">{{ activePlayer().rank }}</span>
+          <h2>{{ activePlayer().name }}</h2>
+          <code>{{ activePlayer().uuid }}</code>
+        </div>
+        <m-status
+          [label]="activePlayer().online ? 'Online' : 'Offline'"
+          [tone]="activePlayer().online ? 'online' : 'offline'"
+        />
+      </div>
+      <div class="admin-player-stats">
+        <span
+          ><small>COINS</small><b>{{ activePlayer().coins | number }}</b></span
+        ><span
+          ><small>LEVEL</small><b>{{ activePlayer().level }}</b></span
+        ><span
+          ><small>SPIELZEIT</small><b>{{ activePlayer().playtime }}</b></span
+        ><span><small>LINKING</small><b>Verknüpft ✓</b></span>
+      </div>
+      <span class="eyebrow">MODERATION</span>
+      <div class="moderation-actions">
+        @for (action of moderationActions; track action) {
+          <button
+            [class.danger]="['Ban', 'Tempban', 'Kick'].includes(action)"
+            (click)="moderationAction.set(action); actionModal.set('moderate')"
+          >
+            {{ action }}
+          </button>
+        }
+      </div>
+      <div class="notes">
+        <div class="card panel-head">
+          <h3>Interne Notizen</h3>
+          <button (click)="actionModal.set('note')">+ Notiz</button>
+        </div>
+        <p>
+          <b>LumaDev · 14.08.2026</b> Freundliche Klärung nach Chat-Konflikt. Keine weiteren
+          Auffälligkeiten.
+        </p>
+      </div>
+      <div class="sanctions">
+        <h3>Moderationshistorie</h3>
+        <div>
+          <span class="status-pill warning"><i></i>WARNUNG</span>
+          <p><b>Spam im Handelschat</b><small>Von Mara · 12. August 2026 · Abgeschlossen</small></p>
+        </div>
+      </div>
+    </article>
+  </section>
+</ng-template>
+
+<ng-template #console>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">ECHTZEITZUGRIFF</span>
+      <h1>Live Console</h1>
+      <p>Serverausgabe überwachen und Commands sicher ausführen.</p>
+    </div>
+    <div class="console-server-select">
+      <span>ZIELSERVER</span
+      ><select class="form-select" [(ngModel)]="serverChoice">
+        <option>CityBuild-1</option>
+        <option>Lobby-1</option>
+        <option>IsleWars-1</option>
+        <option>Proxy</option></select
+      ><m-status label="Verbunden" tone="online" />
+    </div>
+  </div>
+  <section class="console-panel panel">
+    <div class="console-toolbar">
+      <label class="search-field"
+        ><span>⌕</span
+        ><input class="form-control" [(ngModel)]="consoleSearch" placeholder="Logs durchsuchen…"
+      /></label>
+      <div class="log-filters">
+        <button [class.active]="logLevel() === 'ALL'" (click)="logLevel.set('ALL')">Alle</button
+        ><button [class.active]="logLevel() === 'INFO'" (click)="logLevel.set('INFO')">INFO</button
+        ><button [class.active]="logLevel() === 'WARN'" (click)="logLevel.set('WARN')">WARN</button
+        ><button [class.active]="logLevel() === 'ERROR'" (click)="logLevel.set('ERROR')">
+          ERROR
+        </button>
+      </div>
+      <button (click)="consolePaused.update((v) => !v)">
+        {{ consolePaused() ? '▶ Fortsetzen' : 'Ⅱ Pausieren' }}</button
+      ><button (click)="api.showToast('Konsolenzeilen kopiert.')">□ Kopieren</button>
+    </div>
+    <div class="console-output full">
+      @for (line of filteredLogs(); track $index) {
+        <p [class]="line.level.toLowerCase()">
+          <time>{{ line.time }}</time
+          ><b>{{ line.level }}</b
+          ><span>{{ line.message }}</span>
+        </p>
+      }
+      <span class="console-cursor"></span>
+    </div>
+    <form class="command-line large" (ngSubmit)="runCommand()">
+      <b>{{ serverChoice }}</b
+      ><span>›</span
+      ><input
+        class="form-control"
+        [(ngModel)]="command"
+        name="commandFull"
+        placeholder="Minecraft-Command eingeben…"
+        autocomplete="off"
+      /><kbd>Enter</kbd><button>Senden</button>
+    </form>
+    <div class="command-presets">
+      <span>PRESETS</span>
+      @for (preset of ['list', 'tps', 'save-all', 'whitelist list']; track preset) {
+        <button (click)="command = preset">/{{ preset }}</button>
+      }
+    </div>
+  </section>
+</ng-template>
+
+<ng-template #backups>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">DATENSICHERUNG</span>
+      <h1>Backups</h1>
+      <p>Alle Sicherungspunkte zentral verwalten.</p>
+    </div>
+    <button class="btn button primary" (click)="actionModal.set('backup')">
+      + Manuelles Backup
+    </button>
+  </div>
+  <section class="backup-summary">
+    <article>
+      <span>⬡</span>
+      <div>
+        <small>LETZTES BACKUP</small><b>Heute, 03:00</b>
+        <p>CityBuild-1 · Erfolgreich</p>
+      </div>
+    </article>
+    <article>
+      <span>▤</span>
+      <div>
+        <small>GESAMTGRÖSSE</small><b>284,6 GB</b>
+        <p>32 Sicherungspunkte</p>
+      </div>
+    </article>
+    <article>
+      <span>◷</span>
+      <div>
+        <small>NÄCHSTES BACKUP</small><b>In 5 Std. 18 Min.</b>
+        <p>Alle produktiven Server</p>
+      </div>
+    </article>
+  </section>
+  <section class="card panel data-table backup-table">
+    <div class="table-toolbar">
+      <label class="search-field"
+        ><span>⌕</span><input class="form-control" placeholder="Backups durchsuchen…" /></label
+      ><select class="form-select">
+        <option>Alle Server</option>
+        <option>CityBuild-1</option>
+        <option>Lobby-1</option></select
+      ><select class="form-select">
+        <option>Alle Stati</option>
+        <option>Erfolgreich</option>
+        <option>Fehlgeschlagen</option>
+      </select>
+    </div>
+    <div class="table-head">
+      <span>SERVER</span><span>ERSTELLT</span><span>GRÖSSE</span><span>TYP</span><span>STATUS</span
+      ><span>AKTIONEN</span>
+    </div>
+    @for (backup of api.backups(); track backup.id) {
+      <div class="table-row">
+        <b>{{ backup.server }}</b
+        ><span>{{ backup.createdAt }}</span
+        ><span>{{ backup.size }}</span
+        ><span>{{ backup.automatic ? 'Automatisch' : 'Manuell' }} · {{ backup.type }}</span
+        ><m-status
+          [label]="
+            backup.status === 'success'
+              ? 'Erfolgreich'
+              : backup.status === 'running'
+                ? 'Läuft'
+                : 'Fehlgeschlagen'
+          "
+          [tone]="
+            backup.status === 'success' ? 'online' : backup.status === 'failed' ? 'warning' : 'info'
+          "
+        /><span class="table-actions"
+          ><button title="Details">◎</button
+          ><button
+            title="Wiederherstellen"
+            (click)="selectedBackup.set(backup.id); actionModal.set('restore')"
+          >
+            ↻</button
+          ><button
+            title="Löschen"
+            (click)="selectedBackup.set(backup.id); actionModal.set('delete')"
+          >
+            ×
+          </button></span
+        >
+      </div>
+    }
+  </section>
+  <section class="card panel backup-plans">
+    <div class="card panel-head">
+      <div>
+        <span class="eyebrow">AUTOMATISIERUNG</span>
+        <h2>Backup-Pläne</h2>
+      </div>
+      <button class="btn button secondary">Plan bearbeiten</button>
+    </div>
+    <div class="plan-grid">
+      <span><small>INTERVALL</small><b>Täglich um 03:00</b></span
+      ><span><small>AUFBEWAHRUNG</small><b>14 Tage</b></span
+      ><span><small>MAXIMALE ANZAHL</small><b>32 Backups</b></span
+      ><span><small>SERVER</small><b>4 produktive Instanzen</b></span>
+    </div>
+  </section>
+</ng-template>
+
+<ng-template #settings>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">MANAGEMENT</span>
+      <h1>Einstellungen</h1>
+      <p>Netzwerk-, Feature- und Wartungskonfiguration.</p>
+    </div>
+    <button class="btn button primary" (click)="saveSettings()">Änderungen speichern</button>
+  </div>
+  <section class="settings-layout">
+    <nav class="settings-nav panel">
+      @for (tab of ['Netzwerk', 'Features', 'Gamification', 'Backups', 'Wartung']; track tab) {
+        <button [class.active]="settingsTab() === tab" (click)="settingsTab.set(tab)">
+          <span>{{
+            tab === 'Netzwerk'
+              ? '⌁'
+              : tab === 'Features'
+                ? '◈'
+                : tab === 'Gamification'
+                  ? '✦'
+                  : tab === 'Backups'
+                    ? '⬡'
+                    : '⚙'
+          }}</span
+          >{{ tab }}
+        </button>
+      }
+    </nav>
+    <div class="settings-content">
+      <article class="card panel">
+        <span class="eyebrow">{{ settingsTab().toUpperCase() }}</span>
+        <h2>{{ settingsTab() }} konfigurieren</h2>
+        <p>Änderungen werden versioniert und im Audit Log protokolliert.</p>
+        <div class="settings-form">
+          <label>Netzwerkname<input class="form-control" [(ngModel)]="networkName" /></label
+          ><label>Serveradresse<input class="form-control" [(ngModel)]="serverAddress" /></label
+          ><label
+            >Maximale Spieler<input
+              class="form-control"
+              type="number"
+              [(ngModel)]="maxPlayers" /></label
+          ><label class="toggle-row"
+            ><span
+              ><b>Öffentlicher Serverstatus</b
+              ><small>Status und Spielerzahl auf der Landingpage anzeigen.</small></span
+            ><input class="form-control" type="checkbox" [(ngModel)]="publicStatus" /><i></i></label
+          ><label class="toggle-row"
+            ><span><b>Wartungsmodus</b><small>Neue Logins temporär blockieren.</small></span
+            ><input class="form-control" type="checkbox" /><i></i
+          ></label>
+        </div>
+      </article>
+      <article class="card panel change-preview">
+        <span class="eyebrow">ÄNDERUNGSVORSCHAU</span>
+        <h3>Aktuelle Konfiguration</h3>
+        <div>
+          <span><small>VORHER</small><code>maxPlayers: 500</code></span
+          ><i>→</i
+          ><span
+            ><small>NACHHER</small><code>maxPlayers: {{ maxPlayers }}</code></span
+          >
+        </div>
+      </article>
+    </div>
+  </section>
+</ng-template>
+
+<ng-template #roles>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">ACCESS CONTROL</span>
+      <h1>Rollen & Rechte</h1>
+      <p>Feingranulare Berechtigungen für alle Teammitglieder.</p>
+    </div>
+    <button
+      class="btn button primary"
+      (click)="api.showToast('Neue Rolle kann nun konfiguriert werden.')"
+    >
+      + Neue Rolle
+    </button>
+  </div>
+  <section class="role-layout">
+    <div class="role-list panel">
+      @for (role of roleList; track role.name) {
+        <button [class.active]="selectedRole() === role.name" (click)="selectedRole.set(role.name)">
+          <i [style.background]="role.color"></i
+          ><span
+            ><b>{{ role.name }}</b
+            ><small>{{ role.members }} Mitglieder</small></span
+          ><em>{{ role.permissions }} Rechte</em>
+        </button>
+      }
+    </div>
+    <article class="card panel permission-matrix">
+      <div class="card panel-head">
+        <div>
+          <span class="eyebrow">ROLLE BEARBEITEN</span>
+          <h2>{{ selectedRole() }}</h2>
+        </div>
+        <button
+          class="btn button secondary"
+          (click)="api.showToast('Berechtigungen gespeichert und protokolliert.')"
+        >
+          Speichern
+        </button>
+      </div>
+      <div class="permission-groups">
+        @for (group of permissionGroups; track group.name) {
+          <section>
+            <h3>{{ group.name }}</h3>
+            @for (permission of group.items; track permission.label) {
+              <label class="toggle-row"
+                ><span
+                  ><b>{{ permission.label }}</b
+                  ><small>{{ permission.description }}</small></span
+                ><input class="form-control" type="checkbox" [checked]="permission.enabled" /><i></i
+              ></label>
+            }
+          </section>
+        }
+      </div>
+    </article>
+  </section>
+</ng-template>
+
+<ng-template #logs>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">NACHVOLLZIEHBARKEIT</span>
+      <h1>Audit Logs</h1>
+      <p>Jede administrative Aktion lückenlos protokolliert.</p>
+    </div>
+    <button class="btn button secondary" (click)="api.showToast('Audit Logs als CSV exportiert.')">
+      ↓ Exportieren
+    </button>
+  </div>
+  <section class="card panel data-table audit-table">
+    <div class="table-toolbar">
+      <label class="search-field"
+        ><span>⌕</span
+        ><input
+          class="form-control"
+          [(ngModel)]="auditSearch"
+          placeholder="Actor, Aktion oder Ziel suchen…" /></label
+      ><select class="form-select">
+        <option>Alle Aktionen</option>
+        <option>Server</option>
+        <option>Moderation</option>
+        <option>Konfiguration</option></select
+      ><input class="form-control" type="date" value="2026-09-07" />
+    </div>
+    <div class="table-head">
+      <span>ZEITPUNKT</span><span>ACTOR</span><span>AKTION</span><span>ZIEL</span
+      ><span>ERGEBNIS</span><span>ID</span>
+    </div>
+    @for (entry of filteredAudit(); track entry.id) {
+      <div class="table-row">
+        <span>{{ entry.time }}</span
+        ><b>{{ entry.actor }}</b
+        ><span>{{ entry.action }}</span
+        ><span>{{ entry.target }}</span
+        ><m-status
+          [label]="entry.result"
+          [tone]="entry.result === 'Erfolgreich' ? 'online' : 'warning'"
+        /><code>{{ entry.id.slice(0, 8) }}</code>
+      </div>
+    }
+  </section>
+</ng-template>
+
+<m-modal
+  [open]="actionModal() === 'restart'"
+  title="Server neu starten"
+  eyebrow="KRITISCHE AKTION"
+  (closed)="actionModal.set(null)"
+  ><p>Wähle den Zielserver. Aktive Spieler werden 60 Sekunden vor dem Neustart informiert.</p>
+  <label class="field"
+    >Zielserver<select class="form-select" [(ngModel)]="serverChoice">
+      <option>CityBuild-1</option>
+      <option>Lobby-1</option>
+      <option>IsleWars-1</option>
+    </select></label
+  ><label class="field"
+    >Grund / Kommentar<textarea
+      class="form-control"
+      [(ngModel)]="actionReason"
+      placeholder="Geplantes Update…"
+    ></textarea>
+  </label>
+  <div class="modal-warning">! Der Server wird für kurze Zeit nicht erreichbar sein.</div>
+  <div class="modal-actions">
+    <button class="btn button ghost" (click)="actionModal.set(null)">Abbrechen</button
+    ><button
+      class="btn button danger"
+      (click)="confirmAction('Server-Restart ausgelöst', serverChoice)"
+    >
+      Restart bestätigen
+    </button>
+  </div></m-modal
+>
+<m-modal
+  [open]="actionModal() === 'backup'"
+  title="Manuelles Backup"
+  eyebrow="SICHERUNG ERSTELLEN"
+  (closed)="actionModal.set(null)"
+  ><p>Erstellt einen neuen konsistenten Sicherungspunkt des ausgewählten Servers.</p>
+  <label class="field"
+    >Zielserver<select class="form-select" [(ngModel)]="serverChoice">
+      <option>CityBuild-1</option>
+      <option>Lobby-1</option>
+      <option>IsleWars-1</option>
+    </select></label
+  >
+  <div class="modal-actions">
+    <button class="btn button ghost" (click)="actionModal.set(null)">Abbrechen</button
+    ><button
+      class="btn button primary"
+      (click)="api.addBackup(serverChoice); actionModal.set(null)"
+    >
+      Backup starten
+    </button>
+  </div></m-modal
+>
+<m-modal
+  [open]="actionModal() === 'broadcast'"
+  title="Broadcast senden"
+  eyebrow="NETZWERK-NACHRICHT"
+  (closed)="actionModal.set(null)"
+  ><label class="field"
+    >Ziel<select class="form-select" [(ngModel)]="broadcastTarget">
+      <option>Gesamtes Netzwerk</option>
+      <option>CityBuild-1</option>
+      <option>Lobby-1</option>
+      <option>IsleWars-1</option>
+    </select></label
+  ><label class="field"
+    >Nachricht<textarea
+      class="form-control"
+      [(ngModel)]="broadcastMessage"
+      maxlength="180"
+      placeholder="Nachricht an die Spieler…"
+    ></textarea
+    ><small>{{ broadcastMessage.length }} / 180</small></label
+  >
+  <div class="broadcast-preview">
+    <small>VORSCHAU AUF {{ broadcastTarget.toUpperCase() }}</small>
+    <p><b>[MINEDESSO]</b> {{ broadcastMessage || 'Deine Nachricht erscheint hier.' }}</p>
+  </div>
+  <div class="modal-actions">
+    <button class="btn button ghost" (click)="actionModal.set(null)">Abbrechen</button
+    ><button
+      class="btn button primary"
+      [disabled]="!broadcastMessage.trim()"
+      (click)="confirmAction('Broadcast gesendet', broadcastTarget)"
+    >
+      Senden
+    </button>
+  </div></m-modal
+>
+<m-modal
+  [open]="actionModal() === 'whitelist'"
+  title="Whitelist verwalten"
+  eyebrow="ZUGANGSKONTROLLE"
+  (closed)="actionModal.set(null)"
+  ><label class="search-field"
+    ><span>⌕</span><input class="form-control" placeholder="Spieler suchen und hinzufügen…"
+  /></label>
+  <div class="whitelist">
+    @for (name of whitelist; track name) {
+      <div>
+        <m-avatar [name]="name" hue="#86c665" size="small" /><b>{{ name }}</b
+        ><button (click)="removeWhitelist(name)">Entfernen</button>
+      </div>
+    }
+  </div>
+  <div class="modal-actions">
+    <button
+      class="btn button primary"
+      (click)="actionModal.set(null); api.audit('Whitelist geändert', serverChoice)"
+    >
+      Fertig
+    </button>
+  </div></m-modal
+>
+<m-modal
+  [open]="actionModal() === 'moderate'"
+  [title]="moderationAction() + ': ' + activePlayer().name"
+  eyebrow="MODERATIONSAKTION"
+  (closed)="actionModal.set(null)"
+  ><label class="field"
+    >Grund<select class="form-select" [(ngModel)]="actionReason">
+      <option value="">Grund auswählen…</option>
+      <option>Spam / Werbung</option>
+      <option>Beleidigung</option>
+      <option>Griefing</option>
+      <option>Cheating</option>
+    </select></label
+  >
+  @if (moderationAction().includes('Temp')) {
+    <label class="field"
+      >Dauer<select class="form-select">
+        <option>1 Stunde</option>
+        <option>1 Tag</option>
+        <option>7 Tage</option>
+        <option>30 Tage</option>
+      </select></label
+    >
+  }
+  <label class="field"
+    >Interne Notiz<textarea
+      class="form-control"
+      placeholder="Optional, nur für das Team sichtbar"
+    ></textarea>
+  </label>
+  <div class="modal-warning">! Die Aktion wird sofort ausgeführt und protokolliert.</div>
+  <div class="modal-actions">
+    <button class="btn button ghost" (click)="actionModal.set(null)">Abbrechen</button
+    ><button
+      class="btn button danger"
+      [disabled]="!actionReason"
+      (click)="confirmAction(moderationAction(), activePlayer().name)"
+    >
+      {{ moderationAction() }} bestätigen
+    </button>
+  </div></m-modal
+>
+<m-modal
+  [open]="actionModal() === 'restore' || actionModal() === 'delete'"
+  [title]="actionModal() === 'restore' ? 'Backup wiederherstellen' : 'Backup löschen'"
+  eyebrow="KRITISCHE AKTION"
+  (closed)="actionModal.set(null)"
+  ><p>
+    Du bearbeitest den Sicherungspunkt <strong>{{ selectedBackup() }}</strong
+    >. Prüfe Ziel und Zeitpunkt sorgfältig.
+  </p>
+  <div class="modal-warning">! Diese Aktion kann laufende Weltdaten beeinflussen.</div>
+  <div class="modal-actions">
+    <button class="btn button ghost" (click)="actionModal.set(null)">Abbrechen</button
+    ><button
+      class="btn button danger"
+      (click)="
+        confirmAction(
+          actionModal() === 'restore' ? 'Backup wiederhergestellt' : 'Backup gelöscht',
+          selectedBackup()
+        )
+      "
+    >
+      Verbindlich bestätigen
+    </button>
+  </div></m-modal
+>
+<m-modal
+  [open]="actionModal() === 'server'"
+  [title]="activeServer().name"
+  eyebrow="SERVERDETAILS"
+  (closed)="actionModal.set(null)"
+  ><div class="server-detail-modal">
+    <m-status
+      [label]="statusLabel(activeServer().status)"
+      [tone]="activeServer().status === 'online' ? 'online' : 'warning'"
+    />
+    <div class="admin-player-stats">
+      <span
+        ><small>SPIELER</small><b>{{ activeServer().players }}</b></span
+      ><span
+        ><small>RAM</small><b>{{ activeServer().ram }} %</b></span
+      ><span
+        ><small>CPU</small><b>{{ activeServer().cpu }} %</b></span
+      ><span
+        ><small>TPS / MSPT</small><b>{{ activeServer().tps }} / {{ activeServer().mspt }}</b></span
+      ><span
+        ><small>UPTIME</small><b>{{ activeServer().uptime }}</b></span
+      ><span
+        ><small>VERSION</small><b>{{ activeServer().version }}</b></span
+      >
+    </div>
+    <h3>Systeminformationen</h3>
+    <p>Startzeit: 19. August 2026, 17:04 · Region: Frankfurt · Java 25 · Linux x86_64</p>
+  </div></m-modal
+>
+<m-modal
+  [open]="actionModal() === 'note'"
+  title="Interne Notiz"
+  eyebrow="NUR FÜR DAS SERVERTEAM"
+  (closed)="actionModal.set(null)"
+  ><label class="field"
+    >Notiz<textarea class="form-control" placeholder="Sachliche interne Notiz…"></textarea>
+  </label>
+  <div class="modal-actions">
+    <button class="btn button ghost" (click)="actionModal.set(null)">Abbrechen</button
+    ><button
+      class="btn button primary"
+      (click)="actionModal.set(null); api.showToast('Interne Notiz gespeichert.')"
+    >
+      Speichern
+    </button>
+  </div></m-modal
+>

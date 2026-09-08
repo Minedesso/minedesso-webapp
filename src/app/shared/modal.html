@@ -1,0 +1,34 @@
+@if (open()) {
+  <div
+    class="modal fade show d-block app-modal-backdrop"
+    tabindex="-1"
+    (click)="closed.emit()"
+    role="presentation"
+  >
+    <div
+      class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+      (click)="$event.stopPropagation()"
+    >
+      <section
+        class="modal-content app-modal"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-labelledby]="modalTitle"
+      >
+        <div class="modal-header app-modal-head">
+          <div>
+            <span class="eyebrow">{{ eyebrow() }}</span>
+            <h2 class="modal-title" [id]="modalTitle">{{ title() }}</h2>
+          </div>
+          <button
+            type="button"
+            class="btn-close"
+            (click)="closed.emit()"
+            aria-label="Dialog schließen"
+          ></button>
+        </div>
+        <div class="modal-body"><ng-content></ng-content></div>
+      </section>
+    </div>
+  </div>
+}

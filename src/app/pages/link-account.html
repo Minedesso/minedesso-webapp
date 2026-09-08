@@ -1,0 +1,66 @@
+<main class="link-layout">
+  <a routerLink="/" class="brand"
+    ><span class="brand-mark"><i></i><i></i><i></i></span
+    ><span>MINEDESSO<small>NETWORK</small></span></a
+  >
+  <section class="link-card">
+    <div class="link-progress">
+      <span class="done">✓<small>ACCOUNT</small></span
+      ><i></i
+      ><span [class.active]="step() >= 1" [class.done]="step() > 1"
+        >{{ step() > 1 ? '✓' : '2' }}<small>VERBINDEN</small></span
+      ><i></i><span [class.active]="step() >= 2">3<small>FERTIG</small></span>
+    </div>
+    @if (step() === 1) {
+      <span class="eyebrow">MINECRAFT VERKNÜPFEN</span>
+      <h1>Fast geschafft, Abenteurer.</h1>
+      <p>
+        Öffne Minecraft, joine <strong>play.minedesso.de</strong> und gib den folgenden Befehl im
+        Chat ein:
+      </p>
+      <div class="link-code">
+        <code>/link MD-7K4P</code
+        ><button (click)="copy()">{{ copied() ? 'Kopiert ✓' : 'Kopieren' }}</button>
+      </div>
+      <div class="expiry">
+        <span>◷</span>
+        <div>
+          <strong>Code gültig für 09:42 Minuten</strong
+          ><small>Der Code kann nur einmal verwendet werden.</small>
+        </div>
+      </div>
+      <div class="link-wait">
+        <span class="spinner"></span>
+        <div>
+          <strong>Warte auf Bestätigung im Spiel…</strong
+          ><small>Diese Seite aktualisiert sich automatisch.</small>
+        </div>
+      </div>
+      <button class="btn button secondary full" (click)="verify()">
+        Demo: Verknüpfung bestätigen</button
+      ><button class="text-button" (click)="regenerate()">Neuen Code erstellen</button>
+    }
+    @if (step() === 2) {
+      <div class="link-success">
+        <div class="success-burst">✓</div>
+        <span class="eyebrow">ERFOLGREICH VERBUNDEN</span>
+        <h1>Willkommen bei Minedesso!</h1>
+        <p>
+          Dein Minecraft-Account <strong>Aloxio</strong> ist jetzt sicher mit deinem Web-Account
+          verbunden.
+        </p>
+        <div class="linked-player">
+          <div class="pixel-face"></div>
+          <div>
+            <small>VERBUNDENER ACCOUNT</small><strong>Aloxio</strong><span>UUID · b30f…0b72</span>
+          </div>
+          <span class="verified">✓ Verifiziert</span>
+        </div>
+        <button class="btn button primary full large" (click)="finish()">
+          Player Hub öffnen →
+        </button>
+      </div>
+    }
+  </section>
+  <p class="link-help">Probleme beim Verbinden? <a href="#">Hilfe öffnen</a></p>
+</main>

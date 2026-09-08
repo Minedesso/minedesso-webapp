@@ -1,0 +1,108 @@
+<main class="auth-layout">
+  <section class="auth-art">
+    <a routerLink="/" class="brand light"
+      ><span class="brand-mark"><i></i><i></i><i></i></span
+      ><span>MINEDESSO<small>NETWORK</small></span></a
+    >
+    <div class="auth-world">
+      <div class="moon"></div>
+      <div class="mountains back"></div>
+      <div class="mountains front"></div>
+      <div class="island">
+        <span class="tower"></span><span class="tree t1"></span><span class="tree t2"></span
+        ><span class="portal"></span>
+      </div>
+    </div>
+    <blockquote>„Jeder Block erzählt eine Geschichte.<br />Welche wird deine sein?“</blockquote>
+    <span class="auth-online"><i></i>{{ api.onlinePlayers() }} Spieler online</span>
+  </section>
+  <section class="auth-panel">
+    <div class="auth-card">
+      <a routerLink="/" class="back-link">← Zurück zur Startseite</a
+      ><span class="eyebrow">WILLKOMMEN ZURÜCK</span>
+      <h1>{{ registerMode() ? 'Dein Abenteuer beginnt.' : 'Schön, dich zu sehen.' }}</h1>
+      <p>
+        {{
+          registerMode()
+            ? 'Erstelle deinen kostenlosen Minedesso-Account.'
+            : 'Melde dich an und setze dein Abenteuer fort.'
+        }}
+      </p>
+      <div class="auth-tabs">
+        <button [class.active]="!registerMode()" (click)="registerMode.set(false)">Anmelden</button
+        ><button [class.active]="registerMode()" (click)="registerMode.set(true)">
+          Registrieren
+        </button>
+      </div>
+      <form (ngSubmit)="submit()" #form="ngForm">
+        @if (registerMode()) {
+          <label
+            >Benutzername<input
+              class="form-control"
+              name="username"
+              [(ngModel)]="username"
+              required
+              minlength="3"
+              autocomplete="username"
+              placeholder="Dein Name"
+          /></label>
+        }
+        <label
+          >E-Mail-Adresse<input
+            class="form-control"
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            email
+            autocomplete="email"
+            placeholder="du@beispiel.de"
+        /></label>
+        <label
+          ><span
+            >Passwort
+            @if (!registerMode()) {
+              <a href="#">Passwort vergessen?</a>
+            }
+          </span>
+          <div class="password-field">
+            <input
+              class="form-control"
+              [type]="showPassword() ? 'text' : 'password'"
+              name="password"
+              [(ngModel)]="password"
+              required
+              minlength="8"
+              autocomplete="current-password"
+              placeholder="Mindestens 8 Zeichen"
+            /><button
+              type="button"
+              (click)="showPassword.update((value) => !value)"
+              [attr.aria-label]="showPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'"
+            >
+              {{ showPassword() ? '◉' : '◎' }}
+            </button>
+          </div></label
+        >
+        @if (error()) {
+          <div class="form-error" role="alert">! {{ error() }}</div>
+        }
+        <button
+          class="btn button primary full large"
+          type="submit"
+          [disabled]="form.invalid || loading()"
+        >
+          {{ loading() ? 'Wird geprüft…' : registerMode() ? 'Account erstellen →' : 'Anmelden →' }}
+        </button>
+      </form>
+      <div class="auth-divider"><span>DEMO-ZUGANG</span></div>
+      <button class="btn button secondary full" (click)="demoLogin()">
+        <span class="cube-icon">◆</span> Mit Demo-Account fortfahren
+      </button>
+      <p class="legal">
+        Mit der Anmeldung akzeptierst du unsere <a href="#">Nutzungsbedingungen</a> und
+        <a href="#">Datenschutzerklärung</a>.
+      </p>
+    </div>
+  </section>
+</main>

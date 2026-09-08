@@ -1,0 +1,10 @@
+<div class="state-card" [class.error]="type() === 'error'">
+  <span class="state-icon">{{
+    type() === 'loading' ? '◌' : type() === 'empty' ? '□' : type() === 'offline' ? '⌁' : '!'
+  }}</span>
+  <h3>{{ title() }}</h3>
+  <p>{{ message() }}</p>
+  @if (type() !== 'loading') {
+    <button class="btn button secondary" (click)="retry.emit()">Erneut versuchen</button>
+  }
+</div>

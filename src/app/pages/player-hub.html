@@ -1,0 +1,863 @@
+@switch (page()) {
+  @case ('overview') {
+    <ng-container *ngTemplateOutlet="overview" />
+  }
+  @case ('profile') {
+    <ng-container *ngTemplateOutlet="profile" />
+  }
+  @case ('game-modes') {
+    <ng-container *ngTemplateOutlet="gameModes" />
+  }
+  @case ('friends') {
+    <ng-container *ngTemplateOutlet="friends" />
+  }
+  @case ('achievements') {
+    <ng-container *ngTemplateOutlet="achievements" />
+  }
+  @case ('quests') {
+    <ng-container *ngTemplateOutlet="quests" />
+  }
+  @case ('daily') {
+    <ng-container *ngTemplateOutlet="daily" />
+  }
+  @case ('rewards') {
+    <ng-container *ngTemplateOutlet="rewards" />
+  }
+  @case ('chronicles') {
+    <ng-container *ngTemplateOutlet="chronicles" />
+  }
+  @case ('events') {
+    <ng-container *ngTemplateOutlet="events" />
+  }
+  @case ('leaderboards') {
+    <ng-container *ngTemplateOutlet="leaderboards" />
+  }
+}
+
+<ng-template #overview>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">SONNTAG, 7. SEPTEMBER</span>
+      <h1>Willkommen zurück, {{ api.player().name }}.</h1>
+      <p>Dein nächstes Abenteuer wartet bereits.</p>
+    </div>
+    <div class="sync-state">
+      <i></i><span>LIVE-SYNC<small>Vor 12 Sek. aktualisiert</small></span>
+    </div>
+  </div>
+  <section class="dashboard-grid">
+    <article class="player-hero-card panel">
+      <div class="profile-banner">
+        <span class="rank-badge">{{ api.player().rank }}</span
+        ><m-avatar
+          [name]="api.player().name"
+          [hue]="api.player().hue"
+          [src]="api.player().skinUrl"
+          [skinIndex]="api.player().skinIndex"
+          size="large"
+        />
+      </div>
+      <div class="player-summary">
+        <span class="online-label"><i></i>ONLINE · {{ api.player().server }}</span>
+        <h2>{{ api.player().name }}</h2>
+        <p>Netzwerk-Level {{ api.player().level }}</p>
+        <m-progress
+          [value]="api.player().xp"
+          [max]="api.player().xpTarget"
+          label="FORTSCHRITT ZU LEVEL 43"
+        />
+        <div class="player-meta">
+          <span
+            ><b>◈ {{ api.player().coins | number: '1.0-0' : 'de' }}</b
+            >Overall Coins</span
+          ><span
+            ><b>◷ {{ api.player().playtime }}</b
+            >Spielzeit</span
+          >
+        </div>
+        <a routerLink="/hub/profile" class="text-link">Profil ansehen →</a>
+      </div>
+    </article>
+    <article class="card panel quest-focus">
+      <div class="card panel-head">
+        <div>
+          <span class="eyebrow">AKTIVE QUEST</span>
+          <h2>Baumeister im Grünen</h2>
+        </div>
+        <span class="timer">◷ 11:42:18</span>
+      </div>
+      <div class="quest-illustration">
+        <span class="block b1"></span><span class="block b2"></span><span class="block b3"></span
+        ><span class="tool">⛏</span>
+      </div>
+      <p>Platziere 500 Blöcke auf CityBuild.</p>
+      <m-progress [value]="320" [max]="500" label="64 % ABGESCHLOSSEN" suffix=" Blöcke" />
+      <div class="reward-line"><span>BELOHNUNG</span><b>+450 XP</b><b>+200 Coins</b></div>
+      <a routerLink="/hub/quests" class="text-link">Alle Quests ansehen →</a>
+    </article>
+    <article class="card panel daily-card">
+      <div class="daily-top">
+        <div>
+          <span class="eyebrow">DAILY REWARD</span>
+          <h2>Tag 7</h2>
+          <p>Deine Streak brennt!</p>
+        </div>
+        <div class="streak-flame">♨<b>7</b><small>TAGE</small></div>
+      </div>
+      <div class="daily-chest">
+        <span>◆</span>
+        <div><small>HEUTIGE BELOHNUNG</small><strong>350 Coins</strong><em>+ Mystery Item</em></div>
+      </div>
+      <button class="btn button primary full" (click)="claimDaily()" [disabled]="dailyClaimed()">
+        {{ dailyClaimed() ? 'Heute abgeholt ✓' : 'Jetzt abholen' }}
+      </button>
+      <div class="week-dots">
+        @for (day of [1, 2, 3, 4, 5, 6, 7]; track day) {
+          <span [class.done]="day < 7" [class.today]="day === 7"
+            >{{ day < 7 ? '✓' : day }}<small>T{{ day }}</small></span
+          >
+        }
+      </div>
+    </article>
+    <article class="card panel friends-online">
+      <div class="card panel-head">
+        <div>
+          <span class="eyebrow">FREUNDE</span>
+          <h2>2 sind online</h2>
+        </div>
+        <a routerLink="/hub/friends" class="text-link">Alle →</a>
+      </div>
+      @for (friend of api.friends().slice(0, 3); track friend.id) {
+        <div class="friend-row">
+          <m-avatar
+            [name]="friend.name"
+            [hue]="friend.hue"
+            [src]="friend.skinUrl"
+            [skinIndex]="friend.skinIndex"
+            size="small"
+          />
+          <div>
+            <strong>{{ friend.name }}</strong
+            ><span>{{ friend.online ? friend.server : friend.lastSeen }}</span>
+          </div>
+          @if (friend.online) {
+            <button class="btn button tiny secondary" (click)="api.joinFriend(friend)">
+              Nachjoinen
+            </button>
+          } @else {
+            <m-status label="Offline" tone="offline" />
+          }
+        </div>
+      }
+    </article>
+    <article class="card panel next-milestone">
+      <span class="eyebrow">NÄCHSTER MEILENSTEIN</span>
+      <div class="milestone-title">
+        <span>♜</span>
+        <div>
+          <small>LEVEL 45</small>
+          <h2>Erfahrener Reisender</h2>
+          <p>Schalte einen exklusiven Profilrahmen frei.</p>
+        </div>
+      </div>
+      <m-progress [value]="api.player().level" [max]="45" label="NOCH 3 LEVEL" />
+      <div class="milestone-path">
+        <i class="done">40</i><span></span><i class="done">42</i><span></span><i>43</i><span></span
+        ><i class="goal">45</i>
+      </div>
+      <a routerLink="/hub/game-modes" class="text-link">Meilensteinpfad öffnen →</a>
+    </article>
+    <article class="card panel chronicle-teaser">
+      <div class="chronicle-scape">
+        <span class="sun"></span><span class="ridge"></span><span class="trail"></span>
+      </div>
+      <div>
+        <span class="tag">CHRONIK I · AKTIV</span>
+        <h2>Der Aufbruch</h2>
+        <p>Kapitel 3 von 5 · Das Moortal</p>
+        <m-progress [value]="62" [max]="100" label="GESAMTFORTSCHRITT" suffix="%" /><a
+          routerLink="/hub/chronicles"
+          class="btn button secondary"
+          >Reise fortsetzen →</a
+        >
+      </div>
+    </article>
+  </section>
+</ng-template>
+
+<ng-template #profile>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">DEIN SPIELERPROFIL</span>
+      <h1>Profil & Fortschritt</h1>
+      <p>Alles, was du auf Minedesso erreicht hast.</p>
+    </div>
+    <button class="btn button secondary" (click)="api.showToast('Profil-Link kopiert.')">
+      Profil teilen ↗
+    </button>
+  </div>
+  <section class="profile-layout">
+    <article class="card panel profile-identity">
+      <div class="profile-cover"></div>
+      <m-avatar
+        [name]="api.player().name"
+        [hue]="api.player().hue"
+        [src]="api.player().skinUrl"
+        [skinIndex]="api.player().skinIndex"
+        size="large"
+      /><span class="rank-badge">{{ api.player().rank }}</span>
+      <h2>{{ api.player().name }}</h2>
+      <code>{{ api.player().uuid }}</code
+      ><span class="online-label"><i></i>ONLINE AUF {{ api.player().server }}</span>
+      <div class="profile-facts">
+        <span
+          ><small>DABEI SEIT</small><b>{{ api.player().joinedAt }}</b></span
+        ><span
+          ><small>SPIELZEIT</small><b>{{ api.player().playtime }}</b></span
+        ><span><small>LETZTE SESSION</small><b>CityBuild · Heute</b></span>
+      </div>
+    </article>
+    <div class="profile-content">
+      <article class="card panel network-level">
+        <div class="level-orb">{{ api.player().level }}<small>LEVEL</small></div>
+        <div>
+          <span class="eyebrow">NETZWERK-LEVEL</span>
+          <h2>Erfahrener Abenteurer</h2>
+          <m-progress
+            [value]="api.player().xp"
+            [max]="api.player().xpTarget"
+            label="7.340 XP · NOCH 2.660 XP"
+          />
+        </div>
+        <div class="coin-balance">
+          <small>OVERALL COINS</small
+          ><strong>◈ {{ api.player().coins | number: '1.0-0' : 'de' }}</strong>
+        </div>
+      </article>
+      <article class="card panel">
+        <div class="card panel-head">
+          <div>
+            <span class="eyebrow">AUSGEWÄHLTE BADGES</span>
+            <h2>Deine seltensten Erfolge</h2>
+          </div>
+          <a routerLink="/hub/achievements" class="text-link">Alle 12 ansehen →</a>
+        </div>
+        <div class="badge-grid">
+          <div><i>♜</i><b>Waldläufer</b><small>Selten</small></div>
+          <div><i>✦</i><b>Pionier</b><small>Legendär</small></div>
+          <div><i>◆</i><b>Händler III</b><small>Episch</small></div>
+          <div class="locked"><i>?</i><b>Geheimnis</b><small>Noch verborgen</small></div>
+        </div>
+      </article>
+      <article class="card panel">
+        <div class="card panel-head">
+          <div>
+            <span class="eyebrow">CHRONIK-HISTORIE</span>
+            <h2>Deine Geschichten</h2>
+          </div>
+        </div>
+        <div class="history-card">
+          <div class="history-art"></div>
+          <div>
+            <span class="tag">AKTIVE CHRONIK</span>
+            <h3>Chronik I – Der Aufbruch</h3>
+            <p>3 von 5 Kapiteln · 62 % abgeschlossen</p>
+            <m-progress [value]="62" [max]="100" label="FORTSCHRITT" suffix="%" />
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+</ng-template>
+
+<ng-template #gameModes>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">SPIELMODUS-FORTSCHRITT</span>
+      <h1>Deine Welten. Deine Erfolge.</h1>
+      <p>Jeder Modus schreibt seine eigene Geschichte.</p>
+    </div>
+  </div>
+  <div class="mode-tabs">
+    @for (mode of modes; track mode.id) {
+      <button [class.active]="selectedMode() === mode.id" (click)="selectedMode.set(mode.id)">
+        <span>{{ mode.icon }}</span>
+        <div>
+          <strong>{{ mode.name }}</strong
+          ><small>{{ mode.subtitle }}</small>
+        </div>
+      </button>
+    }
+  </div>
+  <section class="mode-layout">
+    <article class="card panel mode-overview">
+      <div class="mode-scene" [class.isle]="activeMode().id === 'islewars'">
+        <span>{{ activeMode().icon }}</span>
+      </div>
+      <div class="mode-level">
+        <span class="level-orb">{{ activeMode().level }}<small>LEVEL</small></span>
+        <div>
+          <span class="eyebrow">{{ activeMode().name.toUpperCase() }}</span>
+          <h2>{{ activeMode().title }}</h2>
+          <m-progress [value]="activeMode().xp" [max]="activeMode().target" label="FORTSCHRITT" />
+        </div>
+      </div>
+      <div class="stat-grid">
+        @for (stat of activeMode().stats; track stat.label) {
+          <span
+            ><i>{{ stat.icon }}</i
+            ><strong>{{ stat.value }}</strong
+            ><small>{{ stat.label }}</small></span
+          >
+        }
+      </div>
+    </article>
+    <article class="card panel path-panel">
+      <div class="card panel-head">
+        <div>
+          <span class="eyebrow">MEILENSTEINPFAD</span>
+          <h2>Der Weg nach vorn</h2>
+        </div>
+        <span class="tag">NÄCHSTES ZIEL · LEVEL {{ activeMode().next }}</span>
+      </div>
+      <div class="advancement-path">
+        @for (node of activeMode().milestones; track node.level; let i = $index) {
+          <div
+            class="path-node"
+            [class.done]="node.level <= activeMode().level"
+            [class.current]="i === 2"
+          >
+            <i>{{ node.icon }}</i
+            ><strong>Level {{ node.level }}</strong
+            ><span>{{ node.name }}</span
+            ><small>{{ node.reward }}</small>
+          </div>
+          @if (!$last) {
+            <span class="path-line" [class.done]="node.level < activeMode().level"></span>
+          }
+        }
+      </div>
+      <div class="next-reward">
+        <span>◆</span>
+        <div>
+          <small>NÄCHSTE BELOHNUNG</small><strong>{{ activeMode().reward }}</strong>
+          <p>Noch {{ activeMode().target - activeMode().xp | number }} XP bis zum Freischalten.</p>
+        </div>
+      </div>
+    </article>
+  </section>
+</ng-template>
+
+<ng-template #friends>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">DEINE CREW</span>
+      <h1>Gemeinsam ist jede Welt besser.</h1>
+      <p>{{ api.friends().length }} Freunde · 2 gerade online</p>
+    </div>
+    <button class="btn button primary" (click)="friendModal.set(true)">+ Freund hinzufügen</button>
+  </div>
+  <div class="filter-bar">
+    <label class="search-field"
+      ><span>⌕</span
+      ><input class="form-control" [(ngModel)]="friendSearch" placeholder="Freunde durchsuchen…"
+    /></label>
+    <div class="btn-group segmented">
+      <button [class.active]="friendFilter() === 'all'" (click)="friendFilter.set('all')">
+        Alle</button
+      ><button [class.active]="friendFilter() === 'online'" (click)="friendFilter.set('online')">
+        Online</button
+      ><button [class.active]="friendFilter() === 'offline'" (click)="friendFilter.set('offline')">
+        Offline
+      </button>
+    </div>
+  </div>
+  <div class="friend-grid">
+    @for (friend of filteredFriends(); track friend.id) {
+      <article class="card panel friend-card">
+        <div class="friend-cover" [style.--skin]="friend.hue"></div>
+        <m-avatar
+          [name]="friend.name"
+          [hue]="friend.hue"
+          [src]="friend.skinUrl"
+          [skinIndex]="friend.skinIndex"
+          size="large"
+        /><m-status
+          [label]="friend.online ? 'Online' : 'Offline'"
+          [tone]="friend.online ? 'online' : 'offline'"
+        />
+        <h2>{{ friend.name }}</h2>
+        <span class="rank-label">{{ friend.rank }} · Level {{ friend.level }}</span>
+        <div class="friend-presence">
+          <small>{{ friend.online ? 'SPIELT GERADE' : 'ZULETZT ONLINE' }}</small
+          ><strong>{{ friend.online ? friend.server : friend.lastSeen }}</strong>
+        </div>
+        @if (friend.online) {
+          <button class="btn button primary full" (click)="api.joinFriend(friend)">
+            Nachjoinen →
+          </button>
+        } @else {
+          <button class="btn button secondary full" disabled>Nicht erreichbar</button>
+        }
+      </article>
+    } @empty {
+      <div class="empty-inline">Keine Freunde für diesen Filter gefunden.</div>
+    }
+  </div>
+  <m-modal
+    [open]="friendModal()"
+    title="Freund hinzufügen"
+    eyebrow="SPIELERSUCHE"
+    (closed)="friendModal.set(false)"
+    ><label class="field"
+      >Minecraft-Name<input class="form-control" placeholder="Spielername eingeben"
+    /></label>
+    <div class="modal-actions">
+      <button class="btn button ghost" (click)="friendModal.set(false)">Abbrechen</button
+      ><button
+        class="btn button primary"
+        (click)="friendModal.set(false); api.showToast('Freundschaftsanfrage gesendet.')"
+      >
+        Anfrage senden
+      </button>
+    </div></m-modal
+  >
+</ng-template>
+
+<ng-template #achievements>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">86 VON 142 FREIGESCHALTET</span>
+      <h1>Der Pfad der Legenden</h1>
+      <p>Folge den Spuren, entdecke Geheimnisse und verdiene seltene Badges.</p>
+    </div>
+    <div class="completion-ring"><b>61%</b><small>GESAMT</small></div>
+  </div>
+  <div class="nav nav-pills category-tabs">
+    @for (
+      category of ['Netzwerk', 'CityBuild', 'IsleWars', 'Social', 'Events', 'Quests', 'Secrets'];
+      track category
+    ) {
+      <button
+        [class.active]="achievementCategory() === category"
+        (click)="achievementCategory.set(category)"
+      >
+        {{ category }}
+      </button>
+    }
+  </div>
+  <section class="achievement-tree panel">
+    <div class="tree-background"></div>
+    <div class="tree-chain">
+      @for (achievement of achievementNodes; track achievement.title; let i = $index) {
+        <button
+          class="achievement-node"
+          [class.done]="achievement.state === 'done'"
+          [class.active]="achievement.state === 'active'"
+          [class.locked]="achievement.state === 'locked'"
+          [style.--row]="achievement.row"
+          [style.--col]="achievement.col"
+          (click)="selectedAchievement.set(i)"
+        >
+          <span>{{ achievement.icon }}</span
+          ><small>{{ achievement.title }}</small>
+        </button>
+      }
+    </div>
+    <div class="achievement-detail">
+      <span class="eyebrow">ACHIEVEMENT CHAIN</span>
+      <h2>{{ achievementNodes[selectedAchievement()].title }}</h2>
+      <p>{{ achievementNodes[selectedAchievement()].description }}</p>
+      <m-progress
+        [value]="achievementNodes[selectedAchievement()].progress"
+        [max]="achievementNodes[selectedAchievement()].target"
+        label="FORTSCHRITT"
+      />
+      <div class="reward-line">
+        <span>BELOHNUNG</span><b>{{ achievementNodes[selectedAchievement()].reward }}</b>
+      </div>
+    </div>
+  </section>
+</ng-template>
+
+<ng-template #quests>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">QUEST BOARD</span>
+      <h1>Wähle dein nächstes Ziel.</h1>
+      <p>Fortschritt zählt erst, wenn du eine Quest aktiv startest.</p>
+    </div>
+    <div class="reset-clock">
+      <span>◷</span>
+      <div><small>DAILY RESET IN</small><b>11:42:18</b></div>
+    </div>
+  </div>
+  <div class="nav nav-pills category-tabs">
+    @for (type of ['Alle', 'Daily', 'Weekly', 'Event']; track type) {
+      <button [class.active]="questFilter() === type" (click)="questFilter.set(type)">
+        {{ type }}
+      </button>
+    }
+  </div>
+  <div class="quest-grid">
+    @for (quest of filteredQuests(); track quest.id) {
+      <article class="card panel quest-card" [class.claimable]="quest.status === 'claimable'">
+        <div class="quest-card-top">
+          <span class="quest-type">{{ quest.type }}</span
+          ><span class="timer">◷ {{ quest.expires }}</span>
+        </div>
+        <span class="quest-symbol">{{
+          quest.type === 'Event' ? '✦' : quest.type === 'Weekly' ? '⚔' : '⛏'
+        }}</span>
+        <h2>{{ quest.title }}</h2>
+        <p>{{ quest.description }}</p>
+        @if (quest.status !== 'available') {
+          <m-progress [value]="quest.progress" [max]="quest.target" label="FORTSCHRITT" />
+        }
+        <div class="reward-line">
+          <span>BELOHNUNG</span><b>{{ quest.reward }}</b>
+        </div>
+        @switch (quest.status) {
+          @case ('available') {
+            <button class="btn button primary full" (click)="api.startQuest(quest.id)">
+              Quest starten
+            </button>
+          }
+          @case ('active') {
+            <button class="btn button secondary full" disabled>Quest läuft</button>
+          }
+          @case ('claimable') {
+            <button class="btn button primary full pulse" (click)="api.claimQuest(quest.id)">
+              Belohnung abholen
+            </button>
+          }
+          @case ('claimed') {
+            <button class="btn button secondary full" disabled>Abgeholt ✓</button>
+          }
+        }
+      </article>
+    }
+  </div>
+</ng-template>
+
+<ng-template #daily>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">TÄGLICHE BELOHNUNGEN</span>
+      <h1>Deine Treue zahlt sich aus.</h1>
+      <p>Komm jeden Tag zurück und halte deine Streak am Leben.</p>
+    </div>
+    <div class="streak-summary">
+      ♨ <b>7</b><span>TAGE STREAK<small>Persönlicher Rekord: 18</small></span>
+    </div>
+  </div>
+  <section class="daily-hero panel">
+    <div class="daily-rays"></div>
+    <div class="reward-chest">◆<span>✦</span></div>
+    <div>
+      <span class="tag">TAG 7 · HEUTE</span>
+      <h2>Die große Wochenkiste</h2>
+      <p>Du hast die ganze Woche durchgehalten. Diese Belohnung gehört dir.</p>
+      <div class="today-rewards">
+        <span><i>◈</i><b>350</b><small>COINS</small></span
+        ><span><i>✦</i><b>800</b><small>XP</small></span
+        ><span><i>?</i><b>1×</b><small>MYSTERY ITEM</small></span>
+      </div>
+      <button class="btn button primary large" (click)="claimDaily()" [disabled]="dailyClaimed()">
+        {{ dailyClaimed() ? 'Belohnung abgeholt ✓' : 'Belohnung abholen' }}</button
+      ><small>Nächster Reset um 00:00 Uhr Serverzeit</small>
+    </div>
+  </section>
+  <section class="card panel reward-calendar">
+    <div class="card panel-head">
+      <div>
+        <span class="eyebrow">DIESE WOCHE</span>
+        <h2>Dein Reward-Kalender</h2>
+      </div>
+      <span>6 von 7 abgeholt</span>
+    </div>
+    <div class="calendar-grid">
+      @for (reward of dailyRewards; track reward.day) {
+        <div [class.done]="reward.day < 7" [class.today]="reward.day === 7">
+          <small>TAG {{ reward.day }}</small
+          ><i>{{ reward.icon }}</i
+          ><strong>{{ reward.value }}</strong
+          ><span>{{ reward.label }}</span>
+          @if (reward.day < 7) {
+            <b>✓</b>
+          }
+        </div>
+      }
+    </div>
+  </section>
+</ng-template>
+
+<ng-template #rewards>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">DEIN INVENTAR</span>
+      <h1>Verdient. Freigeschaltet. Dein.</h1>
+      <p>Verwalte alle Web-, Ingame- und Chat-Cosmetics an einem Ort.</p>
+    </div>
+    <div class="inventory-count">
+      <b>24</b><span>FREIGESCHALTET<small>von 68 Rewards</small></span>
+    </div>
+  </div>
+  <div class="nav nav-pills category-tabs">
+    @for (category of ['Alle', 'Web', 'Ingame', 'Chat', 'Badge']; track category) {
+      <button [class.active]="rewardFilter() === category" (click)="rewardFilter.set(category)">
+        {{ category }}
+      </button>
+    }
+  </div>
+  <div class="reward-grid">
+    @for (reward of filteredRewards(); track reward.id) {
+      <article
+        class="card panel reward-card"
+        [class.locked]="!reward.unlocked"
+        [class.equipped]="reward.equipped"
+      >
+        <div class="rarity" [attr.data-rarity]="reward.rarity">{{ reward.rarity }}</div>
+        <div class="reward-icon">{{ reward.unlocked ? reward.icon : '⌗' }}</div>
+        <span>{{ reward.category.toUpperCase() }}</span>
+        <h2>{{ reward.name }}</h2>
+        <p>{{ reward.source }}</p>
+        @if (reward.unlocked) {
+          <button
+            class="btn button full"
+            [class.primary]="!reward.equipped"
+            [class.secondary]="reward.equipped"
+            (click)="api.equipReward(reward.id)"
+          >
+            {{ reward.equipped ? 'Ausgerüstet ✓' : 'Ausrüsten' }}
+          </button>
+        } @else {
+          <button class="btn button secondary full" disabled>Noch gesperrt</button>
+        }
+      </article>
+    }
+  </div>
+</ng-template>
+
+<ng-template #chronicles>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">MINEDESSO CHRONIKEN</span>
+      <h1>Chronik I – Der Aufbruch</h1>
+      <p>Eine Reise durch fünf Gebiete. Eine Geschichte, die bleibt.</p>
+    </div>
+    <div class="chronicle-time">
+      <span>◷</span>
+      <div><small>ENDET IN</small><b>48 Tagen</b></div>
+    </div>
+  </div>
+  <section class="chronicle-map panel">
+    <div class="map-header">
+      <div>
+        <span class="tag">AKTIVE CHRONIK · KOSTENLOS ERSPIELBAR</span>
+        <h2>Jenseits des erwachten Tors</h2>
+        <p>
+          Der alte Pfad ist wieder offen. Folge den Runen vom sanften Grün bis in die Tiefen der
+          Leere.
+        </p>
+      </div>
+      <div class="map-progress">
+        <b>62%</b><span>GESAMTFORTSCHRITT<small>31 / 50 Knoten</small></span>
+      </div>
+    </div>
+    <div class="regions">
+      @for (region of regions; track region.name; let i = $index) {
+        <article [class.current]="region.current" [class.locked]="region.locked">
+          <div class="region-visual">
+            <span>{{ region.icon }}</span>
+            @for (node of region.nodes; track $index) {
+              <i [class.done]="$index < region.done" [class.active]="$index === region.done"></i>
+            }
+          </div>
+          <small>KAPITEL {{ i + 1 }}</small>
+          <h3>{{ region.name }}</h3>
+          <p>{{ region.subtitle }}</p>
+          <span class="region-status">{{
+            region.locked ? 'Gesperrt' : region.current ? 'In Bearbeitung' : 'Abgeschlossen ✓'
+          }}</span>
+        </article>
+      }
+    </div>
+    <div class="chronicle-legend">
+      <span><i class="done"></i>Abgeschlossen</span><span><i class="active"></i>Verfügbar</span
+      ><span><i></i>Gesperrt</span><a href="#archive">Chronik-Archiv →</a>
+    </div>
+  </section>
+  <section class="chronicle-bottom">
+    <article class="card panel">
+      <span class="eyebrow">AKTUELLER KNOTEN</span>
+      <h2>Die Runen im Moortal</h2>
+      <p>Schließe zwei Event-Quests ab, um das Tor zum Gebirge zu öffnen.</p>
+      <m-progress [value]="1" [max]="2" label="EVENT-QUESTS" /><a
+        routerLink="/hub/quests"
+        class="btn button secondary"
+        >Quest öffnen →</a
+      >
+    </article>
+    <article class="card panel finale-preview">
+      <span>♜</span>
+      <div>
+        <small>CHRONIK-FINALE</small>
+        <h2>Exklusiver Badge: Pfadfinder</h2>
+        <p>Bleibt dauerhaft in deinem Profil sichtbar.</p>
+      </div>
+    </article>
+  </section>
+</ng-template>
+
+<ng-template #events>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">EVENT HUB</span>
+      <h1>Die Welt bleibt niemals still.</h1>
+      <p>Entdecke aktive Events, kommende Abenteuer und vergangene Highlights.</p>
+    </div>
+  </div>
+  <section class="event-feature panel">
+    <div class="event-art">
+      <span>✦</span>
+      <div class="aurora"></div>
+    </div>
+    <div>
+      <span class="tag">JETZT AKTIV · NOCH 6 TAGE</span>
+      <h2>Das Erwachen des Tors</h2>
+      <p>
+        Seltsame Runen leuchten in der alten Lobby. Reise mit der Community durch das Portal und
+        lüfte sein Geheimnis.
+      </p>
+      <div class="event-meta">
+        <span><small>START</small><b>1. September</b></span
+        ><span><small>ENDE</small><b>13. September</b></span
+        ><span><small>TEILNEHMER</small><b>1.842 Spieler</b></span>
+      </div>
+      <div class="event-links">
+        <a routerLink="/hub/quests">3 Event-Quests →</a
+        ><a routerLink="/hub/achievements">2 Achievements →</a
+        ><a routerLink="/hub/chronicles">Chronik-Knoten →</a>
+      </div>
+      <button class="btn button primary" (click)="api.showToast('Teilnahme am Event gespeichert.')">
+        Jetzt teilnehmen
+      </button>
+    </div>
+  </section>
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">ALS NÄCHSTES</span>
+      <h2>Kommende Events</h2>
+    </div>
+  </div>
+  <div class="event-grid">
+    @for (event of upcomingEvents; track event.title) {
+      <article class="card panel">
+        <div class="event-mini-art" [style.--event]="event.color">
+          <span>{{ event.icon }}</span>
+        </div>
+        <span class="tag">STARTET IN {{ event.days }} TAGEN</span>
+        <h2>{{ event.title }}</h2>
+        <p>{{ event.text }}</p>
+        <div class="reward-line">
+          <span>HIGHLIGHT</span><b>{{ event.reward }}</b>
+        </div>
+      </article>
+    }
+  </div>
+</ng-template>
+
+<ng-template #leaderboards>
+  @if (!api.leaderboardOptIn()) {
+    <section class="opt-in panel">
+      <div class="trophy-stage">♜<i></i><i></i><i></i></div>
+      <span class="eyebrow">FREIWILLIGE TEILNAHME</span>
+      <h1>Miss dich mit den Besten.</h1>
+      <p>
+        Ranglisten sind bei Minedesso standardmäßig privat. Erst wenn du dauerhaft zustimmst, werden
+        deine relevanten Werte sichtbar und du kannst andere Platzierungen sehen.
+      </p>
+      <div class="privacy-points">
+        <span
+          ><i>◎</i><b>Du entscheidest</b
+          ><small>Ohne Opt-in bleibst du vollständig verborgen.</small></span
+        ><span
+          ><i>◇</i><b>Diese Daten werden sichtbar</b
+          ><small>Name, Level, Coins, Achievements und Moduswerte.</small></span
+        ><span
+          ><i>⌗</i><b>Dauerhafte Entscheidung</b
+          ><small>Die Teilnahme kann nicht wieder deaktiviert werden.</small></span
+        >
+      </div>
+      <label class="permanent-check"
+        ><input class="form-control" type="checkbox" [(ngModel)]="optInConfirmed" /><span></span>Ich
+        verstehe, dass meine Teilnahme dauerhaft ist und nicht zurückgenommen werden kann.</label
+      ><button
+        class="btn button primary large"
+        [disabled]="!optInConfirmed"
+        (click)="confirmOptIn.set(true)"
+      >
+        Ranglisten dauerhaft aktivieren
+      </button>
+    </section>
+  } @else {
+    <div class="page-heading">
+      <div>
+        <span class="eyebrow">GLOBAL RANKING</span>
+        <h1>Ranglisten</h1>
+        <p>Deine Position unter allen teilnehmenden Abenteurern.</p>
+      </div>
+      <span class="tag">TEILNAHME AKTIV · DAUERHAFT</span>
+    </div>
+    <div class="leaderboard-controls">
+      <div class="nav nav-pills category-tabs">
+        <button class="active">Netzwerk-Level</button><button>Overall Coins</button
+        ><button>Achievements</button><button>IsleWars Siege</button>
+      </div>
+      <div class="btn-group segmented">
+        <button>Woche</button><button>Monat</button><button class="active">All-Time</button>
+      </div>
+    </div>
+    <section class="leaderboard panel">
+      <div class="podium">
+        @for (leader of leaders.slice(0, 3); track leader.name) {
+          <article [class.first]="leader.rank === 1">
+            <span class="place">{{ leader.rank }}</span
+            ><m-avatar [name]="leader.name" [hue]="leader.hue" size="large" /><strong>{{
+              leader.name
+            }}</strong
+            ><small>Level {{ leader.level }}</small>
+          </article>
+        }
+      </div>
+      <div class="ranking-list">
+        @for (leader of leaders.slice(3); track leader.name) {
+          <div [class.me]="leader.name === api.player().name">
+            <b>#{{ leader.rank }}</b
+            ><m-avatar [name]="leader.name" [hue]="leader.hue" size="small" /><strong>{{
+              leader.name
+            }}</strong
+            ><span>{{ leader.name === api.player().name ? 'DU' : leader.rankName }}</span
+            ><em>Level {{ leader.level }}</em>
+          </div>
+        }
+      </div>
+    </section>
+  }
+  <m-modal
+    [open]="confirmOptIn()"
+    title="Letzte Bestätigung"
+    eyebrow="UNWIDERRUFLICHE AKTION"
+    (closed)="confirmOptIn.set(false)"
+    ><p>
+      Mit der Aktivierung wird dein Ranglistenprofil dauerhaft öffentlich. Diese Einstellung kann
+      später nicht zurückgesetzt werden.
+    </p>
+    <div class="modal-warning">! Diese Entscheidung ist endgültig.</div>
+    <div class="modal-actions">
+      <button class="btn button ghost" (click)="confirmOptIn.set(false)">Abbrechen</button
+      ><button class="btn button danger" (click)="enableLeaderboard()">Dauerhaft aktivieren</button>
+    </div></m-modal
+  >
+</ng-template>

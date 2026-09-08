@@ -1,0 +1,11 @@
+<div
+  class="pixel-avatar skin-avatar"
+  [style.--skin]="hue()"
+  [style.background-image]="'url(' + src() + ')'"
+  [style.background-position-x.%]="resolvedSkinIndex() * 25"
+  [class.large]="size() === 'large'"
+  [class.small]="size() === 'small'"
+  role="img"
+  [attr.aria-label]="'Minecraft-Skin von ' + name()"
+>
+</div>

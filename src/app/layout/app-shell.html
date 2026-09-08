@@ -1,0 +1,137 @@
+<div class="app-shell">
+  @if (drawerOpen()) {
+    <button
+      class="drawer-scrim"
+      (click)="drawerOpen.set(false)"
+      aria-label="Navigation schließen"
+    ></button>
+  }
+  <aside class="sidebar" [class.open]="drawerOpen()" [class.collapsed]="sidebarCollapsed()">
+    <div class="sidebar-head">
+      <a routerLink="/hub/overview" class="brand light"
+        ><span class="brand-mark"><i></i><i></i><i></i></span
+        ><span>MINEDESSO<small>NETWORK</small></span></a
+      ><button
+        class="sidebar-toggle"
+        (click)="sidebarCollapsed.update((v) => !v)"
+        [attr.aria-label]="sidebarCollapsed() ? 'Sidebar öffnen' : 'Sidebar schließen'"
+      >
+        ‹
+      </button>
+    </div>
+    <nav class="nav flex-column app-nav" aria-label="App-Navigation">
+      <span class="nav-group-title">PLAYER HUB</span>
+      @for (item of playerNav; track item.route) {
+        <a [routerLink]="item.route" routerLinkActive="active" (click)="drawerOpen.set(false)"
+          ><i>{{ item.icon }}</i
+          ><span>{{ item.label }}</span>
+          @if (item.badge) {
+            <b>{{ item.badge }}</b>
+          }
+        </a>
+      }
+      <span class="nav-group-title">SERVER</span>
+      @for (item of adminNav; track item.route) {
+        <a [routerLink]="item.route" routerLinkActive="active" (click)="drawerOpen.set(false)"
+          ><i>{{ item.icon }}</i
+          ><span>{{ item.label }}</span>
+          @if (item.badge) {
+            <b>{{ item.badge }}</b>
+          }
+        </a>
+      }
+      <span class="nav-group-title">MANAGEMENT</span>
+      @for (item of managementNav; track item.route) {
+        <a [routerLink]="item.route" routerLinkActive="active" (click)="drawerOpen.set(false)"
+          ><i>{{ item.icon }}</i
+          ><span>{{ item.label }}</span></a
+        >
+      }
+    </nav>
+    <div class="sidebar-status">
+      <span><i></i><b>Netzwerk online</b></span
+      ><small>{{ api.onlinePlayers() }} Spieler · {{ api.apiVersion }}</small>
+    </div>
+    <div class="sidebar-user">
+      <m-avatar
+        [name]="api.player().name"
+        [hue]="api.player().hue"
+        [src]="api.player().skinUrl"
+        [skinIndex]="api.player().skinIndex"
+        size="small"
+      />
+      <div>
+        <strong>{{ api.player().name }}</strong
+        ><span>{{ api.player().rank }} · Level {{ api.player().level }}</span>
+      </div>
+      <button (click)="logout()" title="Abmelden">↪</button>
+    </div>
+  </aside>
+  <div class="app-main">
+    <header class="app-header">
+      <div>
+        <button class="mobile-menu" (click)="drawerOpen.set(true)" aria-label="Navigation öffnen">
+          ☰
+        </button>
+        <div class="breadcrumb">
+          <span>{{ area() }}</span
+          ><b>/</b><strong>{{ pageTitle() }}</strong>
+        </div>
+      </div>
+      <div class="header-actions">
+        <label class="quick-search"
+          ><span>⌕</span
+          ><input class="form-control" placeholder="Suchen…" aria-label="Globale Suche" /><kbd
+            >⌘ K</kbd
+          ></label
+        ><button
+          class="icon-button notification-button"
+          (click)="api.notificationsOpen.update((v) => !v)"
+          aria-label="Benachrichtigungen"
+        >
+          <span>♢</span>
+          @if (api.unreadCount()) {
+            <b>{{ api.unreadCount() }}</b>
+          }
+        </button>
+        <div class="header-profile">
+          <m-avatar
+            [name]="api.player().name"
+            [hue]="api.player().hue"
+            [src]="api.player().skinUrl"
+            [skinIndex]="api.player().skinIndex"
+            size="small"
+          /><span
+            ><b>{{ api.player().name }}</b
+            ><small>Administrator</small></span
+          >
+        </div>
+      </div>
+    </header>
+    @if (api.notificationsOpen()) {
+      <section class="notification-popover">
+        <div>
+          <span class="eyebrow">BENACHRICHTIGUNGEN</span
+          ><button (click)="api.markNotificationsRead()">Alle gelesen</button>
+        </div>
+        @for (note of api.notifications(); track note.id) {
+          <a
+            [routerLink]="note.route"
+            (click)="api.notificationsOpen.set(false)"
+            [class.unread]="!note.read"
+            ><i>{{ note.icon }}</i
+            ><span
+              ><strong>{{ note.title }}</strong
+              ><small>{{ note.text }}</small
+              ><time>{{ note.time }}</time></span
+            ></a
+          >
+        }
+      </section>
+    }
+    <div class="route-stage"><router-outlet /></div>
+  </div>
+  @if (api.toast()) {
+    <div class="toast" role="status"><span>✓</span>{{ api.toast() }}</div>
+  }
+</div>
