@@ -711,7 +711,9 @@
   place-items: center;
   overflow: hidden;
   isolation: isolate;
-  background: radial-gradient(circle at 50% 50%, #25362a 0%, #0c1610 56%, #050906 100%);
+  background:
+    radial-gradient(circle at 50% 78%, rgba(67, 105, 66, 0.28), transparent 30%),
+    linear-gradient(180deg, #071009 0%, #0c1810 72%, #111e15 100%);
 }
 .wall-stage::after {
   content: '';
@@ -728,7 +730,7 @@
 .wall-copy {
   position: absolute;
   z-index: 8;
-  top: clamp(62px, 8vh, 88px);
+  top: clamp(92px, 16vh, 160px);
   left: 50%;
   width: min(650px, 90vw);
   transform: translateX(-50%);
@@ -753,12 +755,16 @@
   font-size: 0.78rem;
 }
 .wall-surface {
-  width: min(980px, 94vw);
-  height: min(55vh, 520px);
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: clamp(76px, 10vh, 108px);
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: repeat(6, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(24, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2px;
   perspective: 900px;
   transition: opacity 0.1s linear;
 }
@@ -781,12 +787,10 @@
   position: absolute;
   z-index: -1;
   left: 50%;
-  top: 55%;
-  width: 40vw;
-  height: 40vw;
-  max-width: 560px;
-  max-height: 560px;
-  transform: translate(-50%, -50%);
+  bottom: -16vh;
+  width: min(520px, 58vw);
+  height: min(520px, 58vw);
+  transform: translateX(-50%);
   border-radius: 50%;
   background: radial-gradient(
     circle,
@@ -802,7 +806,7 @@
   position: absolute;
   z-index: 5;
   left: 50%;
-  top: 55%;
+  bottom: 5vh;
 }
 .debris i {
   position: absolute;
@@ -821,11 +825,11 @@
 .break-pickaxe {
   position: absolute;
   z-index: 7;
-  left: 50%;
-  top: 55%;
-  width: clamp(150px, 20vw, 290px);
+  left: 52%;
+  bottom: -105px;
+  width: clamp(170px, 17vw, 240px);
   height: auto;
-  transform-origin: 80% 80%;
+  transform-origin: 72% 86%;
   filter: drop-shadow(0 22px 18px rgba(0, 0, 0, 0.42));
   will-change: transform;
 }
@@ -833,7 +837,7 @@
   position: absolute;
   z-index: 9;
   right: 7vw;
-  bottom: 56px;
+  bottom: calc(clamp(76px, 10vh, 108px) + 19px);
   left: 7vw;
   height: 3px;
   overflow: hidden;
@@ -849,7 +853,7 @@
 .wall-scroll-hint {
   position: absolute;
   z-index: 9;
-  bottom: 69px;
+  bottom: calc(clamp(76px, 10vh, 108px) + 32px);
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.55rem;
   font-weight: 800;
@@ -1308,17 +1312,18 @@
     height: 148px;
   }
   .wall-copy {
-    top: 60px;
+    top: 92px;
   }
   .wall-surface {
-    width: 110vw;
-    height: 46vh;
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(9, 1fr);
-    gap: 3px;
+    width: 100%;
+    height: clamp(72px, 10vh, 90px);
+    grid-template-columns: repeat(24, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 1px;
   }
   .break-pickaxe {
-    width: 170px;
+    bottom: -90px;
+    width: 185px;
   }
   .landing .start-content {
     padding-top: 90px;

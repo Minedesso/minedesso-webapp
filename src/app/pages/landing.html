@@ -299,13 +299,29 @@
   <section id="start" #wallSequence class="wall-sequence" aria-label="Interaktive Mauer">
     <div class="wall-stage" [class.unlocked]="wallUnlocked()">
       <div class="wall-copy">
-        <span>{{ wallUnlocked() ? 'WEG FREIGESCHALTET' : 'DU WILLST MEHR SEHEN?' }}</span>
-        <h2>{{ wallUnlocked() ? 'Der Weg ist frei.' : 'Brich durch die Mauer.' }}</h2>
+        <span>{{
+          wallUnlocked()
+            ? 'WEG FREIGESCHALTET'
+            : particleProgress() > 0
+              ? 'DURCHBRUCH!'
+              : 'DU WILLST MEHR SEHEN?'
+        }}</span>
+        <h2>
+          {{
+            wallUnlocked()
+              ? 'Der Weg ist frei.'
+              : particleProgress() > 0
+                ? 'Geschafft!'
+                : 'Brich durch die Mauer.'
+          }}
+        </h2>
         <p>
           {{
             wallUnlocked()
               ? 'Scrolle weiter und starte deine Reise.'
-              : 'Scrolle weiter – jeder Impuls setzt den nächsten Schlag.'
+              : particleProgress() > 0
+                ? 'Die Barriere zerfällt in einem Partikel-Burst.'
+                : 'Scrolle weiter – jeder Impuls setzt den nächsten Schlag.'
           }}
         </p>
       </div>
@@ -328,10 +344,15 @@
         src="/assets/emerald-pickaxe.png"
         alt=""
         [style.transform]="pickaxeTransform()"
+        [style.opacity]="pickaxeOpacity()"
       />
       <div class="wall-progress"><i [style.width.%]="wallProgress() * 100"></i></div>
       <span class="wall-scroll-hint">{{
-        wallUnlocked() ? 'WEITER SCROLLEN ↓' : 'SCROLLEN ZUM SCHLAGEN'
+        wallUnlocked()
+          ? 'WEITER SCROLLEN ↓'
+          : particleProgress() > 0
+            ? 'PARTIKEL-BURST'
+            : 'SCROLLEN ZUM SCHLAGEN'
       }}</span>
     </div>
   </section>

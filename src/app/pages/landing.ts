@@ -55,8 +55,9 @@ export class LandingComponent implements AfterViewInit {
   readonly activeFeature = signal<ShowcaseFeature['id']>('friends');
   readonly activeStep = signal(0);
   readonly wallProgress = signal(0);
-  readonly wallImpact = computed(() => this.clamp((this.wallProgress() - 0.22) / 0.58));
-  readonly wallUnlocked = computed(() => this.wallProgress() > 0.82);
+  readonly wallImpact = computed(() => this.clamp((this.wallProgress() - 0.6) / 0.2));
+  readonly particleProgress = computed(() => this.clamp((this.wallProgress() - 0.79) / 0.14));
+  readonly wallUnlocked = computed(() => this.wallProgress() > 0.92);
 
   readonly features = signal<ShowcaseFeature[]>([
     {
@@ -122,26 +123,26 @@ export class LandingComponent implements AfterViewInit {
 
   readonly wallPieces = signal<WallPiece[]>(
     Array.from({ length: 72 }, (_, index) => {
-      const column = index % 12;
-      const row = Math.floor(index / 12);
-      const centerDistance = Math.hypot(column - 5.5, row - 2.5);
-      const angle = Math.atan2(row - 2.5, column - 5.5);
+      const column = index % 24;
+      const row = Math.floor(index / 24);
+      const offset = column - 11.5;
+      const centerDistance = Math.abs(offset) + row * 0.8;
       return {
-        x: Math.cos(angle) * (150 + centerDistance * 58),
-        y: Math.sin(angle) * (110 + centerDistance * 42) + 90,
+        x: Math.sign(offset || 1) * (55 + centerDistance * 34),
+        y: -(95 + ((index * 29) % 230)),
         rotation: ((index * 47) % 150) - 75,
-        delay: Math.min(0.52, centerDistance * 0.065),
+        delay: Math.min(0.5, centerDistance * 0.028),
       };
     }),
   );
 
   readonly particles = signal<WallPiece[]>(
     Array.from({ length: 34 }, (_, index) => {
-      const angle = (index / 34) * Math.PI * 2;
+      const angle = Math.PI + (index / 33) * Math.PI;
       const distance = 120 + ((index * 31) % 210);
       return {
         x: Math.cos(angle) * distance,
-        y: Math.sin(angle) * distance + 40,
+        y: Math.sin(angle) * distance - 35,
         rotation: (index * 67) % 180,
         delay: (index % 7) * 0.04,
       };
@@ -215,20 +216,24 @@ export class LandingComponent implements AfterViewInit {
   }
 
   particleTransform(piece: WallPiece): string {
-    const progress = this.clamp((this.wallImpact() - piece.delay) * 1.5);
+    const progress = this.clamp((this.particleProgress() - piece.delay) * 1.15);
     return `translate3d(${piece.x * progress}px, ${piece.y * progress}px, 0) rotate(${piece.rotation * progress}deg) scale(${0.25 + progress})`;
   }
 
   particleOpacity(piece: WallPiece): number {
-    const progress = this.clamp((this.wallImpact() - piece.delay) * 1.5);
+    const progress = this.clamp((this.particleProgress() - piece.delay) * 1.15);
     return Math.sin(progress * Math.PI);
   }
 
   pickaxeTransform(): string {
     const progress = this.wallProgress();
-    const swing = progress < 0.65 ? Math.sin(progress * Math.PI * 13) : 0;
-    const drop = this.clamp((progress - 0.66) / 0.2);
-    return `translate(-50%, -50%) translateY(${drop * 120}px) rotate(${-32 + swing * 38 + drop * 28}deg) scale(${1 - drop * 0.25})`;
+    const strike = progress < 0.72 ? Math.pow(Math.sin(progress * Math.PI * 10), 2) : 0;
+    const exit = this.clamp((progress - 0.72) / 0.13);
+    return `translateX(-50%) translateY(${exit * 170}px) rotate(${-48 + strike * 62 + exit * 20}deg) scale(${1 - exit * 0.18})`;
+  }
+
+  pickaxeOpacity(): number {
+    return 1 - this.clamp((this.wallProgress() - 0.74) / 0.1);
   }
 
   private clamp(value: number): number {
